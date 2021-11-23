@@ -60,17 +60,17 @@ spec:
           livenessProbe:
             httpGet:
               path: /v1/healthcheck/livenessProbe
-              port: gateway-http
+              port: {{ .Values.addr }}
             failureThreshold: 1
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /v1/healthcheck/readinessProbe
-              port: gateway-http
+              port: {{ .Values.addr }}
           startupProbe:
             httpGet:
               path: /v1/healthcheck/startupProbe
-              port: gateway-http
+              port: {{ .Values.addr }}
             failureThreshold: 30
             periodSeconds: 10
           env:
@@ -81,11 +81,13 @@ spec:
           - name: REDIS_HOST
             value: {{ .Values.redisConfig.host }}
           - name: REDIS_ADDR
-            value: {{ .Values.redisConfig.addr }}
+            value: {{ .Values.redisConfig.addr | quote }}
+          - name: REDIS_PASSWORD
+            value: {{ .Values.redisConfig.password }}
           - name: RATE_LIMIT_UNIT
             value: {{ .Values.ratelimitConfig.unit }}
           - name: RATE_LIMIT_VOLUME
-            value: {{ .Values.ratelimitConfig.volume }}
+            value: {{ .Values.ratelimitConfig.volume | quote }}
           - name: DD_SERVICE
             value: dogfood.gatewaay
           - name: DD_VERSION

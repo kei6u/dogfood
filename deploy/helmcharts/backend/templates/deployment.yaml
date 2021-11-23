@@ -63,17 +63,17 @@ spec:
           livenessProbe:
             httpGet:
               path: /v1/healthcheck/livenessProbe
-              port: grpc-gateway
+              port: {{ .Values.ports.grpcGateway }}
             failureThreshold: 1
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /v1/healthcheck/readinessProbe
-              port: grpc-gateway
+              port: {{ .Values.ports.grpcGateway }}
           startupProbe:
             httpGet:
               path: /v1/healthcheck/startupProbe
-              port: grpc-gateway
+              port: {{ .Values.ports.grpcGateway }}
             failureThreshold: 30
             periodSeconds: 10
           env:
