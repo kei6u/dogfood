@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dogfood.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "dogfood.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "dogfood.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        ad.datadoghq.com/{{ .Chart.Name }}.logs: '[{"source":"go","service":{{ .Chart.Name | quote }}}]'
+        ad.datadoghq.com/{{ .Chart.Name }}.check_names: |
+          ["openmetrics"]
+        ad.datadoghq.com/{{ .Chart.Name }}.init_configs: |
+          [{}]
+        ad.datadoghq.com/{{ .Chart.Name }}.instances: |
+            [
+              {
+                "prometheus_url": "http://%%host%%:9092/metrics",
+                "namespace": {{ .Release.Namespace | quote }},
+                "metrics": [
+                  {"grpc_server_started_total":"grpc_server_started_total"},
+                  {"grpc_server_handled_total":"grpc_server_handled_total"},
+                  {"grpc_server_msg_received_total":"grpc_server_msg_received_total"},
+                  {"grpc_server_msg_sent_total":"grpc_server_msg_sent_total"},
+                  {"grpc_server_handling_seconds":"grpc_server_handling_seconds"}
+                ]
+              }
+            ]
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "dogfood.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "dogfood.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: gateway-http
+              containerPort: {{ .Values.addr }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /v1/healthcheck/livenessProbe
+              port: gateway-http
+            failureThreshold: 1
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /v1/healthcheck/readinessProbe
+              port: gateway-http
+          startupProbe:
+            httpGet:
+              path: /v1/healthcheck/startupProbe
+              port: gateway-http
+            failureThreshold: 30
+            periodSeconds: 10
+          env:
+          - name: ADDR
+            value: {{ .Values.addr | quote }}
+          - name: DOGFOOD_BACKEND_ADDR
+            value: {{ .Values.dogfoodBackendAddr }}
+          - name: REDIS_HOST
+            value: {{ .Values.redisConfig.host }}
+          - name: REDIS_ADDR
+            value: {{ .Values.redisConfig.addr }}
+          - name: RATE_LIMIT_UNIT
+            value: {{ .Values.ratelimitConfig.unit }}
+          - name: RATE_LIMIT_VOLUME
+            value: {{ .Values.ratelimitConfig.volume }}
+          - name: DD_SERVICE
+            value: dogfood.gatewaay
+          - name: DD_VERSION
+            value: {{ .Values.image.tag | default .Chart.AppVersion }}
+          - name: DD_AGENT_HOST
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          {{- with .Values.env }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: sysprobe-socket-dir
+          emptyDir: {}
+        - name: debugfs
+          hostPath:
+            path: /sys/kernel/debug
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
