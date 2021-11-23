@@ -14,6 +14,8 @@ import (
 	redisrate "github.com/go-redis/redis_rate/v9"
 	"github.com/kei6u/dogfood/driver"
 	"go.uber.org/zap"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
 const (
@@ -24,6 +26,20 @@ const (
 func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
+
+	tracer.Start(tracer.WithAnalytics(true))
+	defer tracer.Stop()
+
+	if err := profiler.Start(
+		profiler.WithProfileTypes(
+			profiler.CPUProfile,
+			profiler.HeapProfile,
+		),
+	); err != nil {
+		logger.Warn("failed to start profiler", zap.Error(err))
+		return
+	}
+	defer profiler.Stop()
 
 	var addr string
 	var dogfoodBackendAddr string
