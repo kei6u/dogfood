@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	CreateRecordEndpoint = "/v1/dogfood/record"
-	ListRecordsEndpoint  = "/v1/dogfood/records"
+	createRecordEndpoint = "/v1/dogfood/record"
+	listRecordsEndpoint  = "/v1/dogfood/records"
 )
 
 func main() {
@@ -64,15 +64,15 @@ func main() {
 	if err := gw.registerReverseProxy(
 		dogfoodBackendAddr,
 		[]string{
-			CreateRecordEndpoint,
-			ListRecordsEndpoint,
+			createRecordEndpoint,
+			listRecordsEndpoint,
 		},
 	); err != nil {
 		logger.Fatal("failed to register a revere proxy to gateway", zap.Error(err))
 	}
 
-	http.HandleFunc(CreateRecordEndpoint, gw.rateLimit(CreateRecordEndpoint))
-	http.HandleFunc(ListRecordsEndpoint, gw.rateLimit(ListRecordsEndpoint))
+	http.HandleFunc(createRecordEndpoint, gw.rateLimit(createRecordEndpoint))
+	http.HandleFunc(listRecordsEndpoint, gw.rateLimit(listRecordsEndpoint))
 
 	logger.Info("gateway has started", zap.String("port", addr))
 	http.ListenAndServe(fmt.Sprintf(":%s", addr), nil)
