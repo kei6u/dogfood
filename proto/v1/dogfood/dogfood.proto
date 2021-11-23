@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package dogfoodpb.v1;
+
+option go_package = "proto/v1/dogfoodpb";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service DogFoodService {
+  // CreateRecord create a record who ate what, when, and how much.
+  rpc CreateRecord(CreateRecordRequest) returns (Record) {
+    option (google.api.http) = {
+      post : "/v1/dogfood/record"
+      body : "*"
+    };
+  }
+  // ListRecords list up all records.
+  rpc ListRecords(ListRecordsRequest) returns (ListRecordsResponse) {
+    option (google.api.http) = {
+      post : "/v1/dogfood/records"
+      body : "*"
+    };
+  }
+}
+
+message CreateRecordRequest {
+	string dogfood_name = 1;
+	int32 gram = 2;
+  string dog_name = 3;
+}
+
+message ListRecordsRequest {
+  google.protobuf.Timestamp from = 1;
+  int32 page_size = 2;
+  google.protobuf.Timestamp to = 3;
+}
+message ListRecordsResponse {
+  repeated Record records = 1;
+  google.protobuf.Timestamp to = 2;
+}
+
+message Record {
+	string dogfood_name = 1;
+	int32 gram = 2;
+  string dog_name = 3;
+  google.protobuf.Timestamp eaten_at = 4;
+}

@@ -1,0 +1,55 @@
+version: "3.8"
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: ./cmd/gateway/Dockerfile
+    ports:
+      - 50001:50001
+    environment:
+      ADDR: 50001
+      DOGFOOD_BACKEND_ADDR: http://backend:50101
+      REDIS_HOST: redis  # match service name of redis.
+      REDIS_ADDR: 6379
+      RATELIMIT_UNIT: minute
+      RATELIMIT_VOLUME: 10
+    networks:
+      - default
+    depends_on:
+      - redis
+  backend:
+    build:
+      context: .
+      dockerfile: ./cmd/backend/Dockerfile
+    ports:
+      - 50100:50100
+      - 50101:50101
+    environment:
+      POSTGRES_HOST: postgres # match service name of postgres.
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: dogfood
+      POSTGRES_PASSWORD: dogfood
+      POSTGRES_DB: dogfood
+      GRPC_ADDR: 50100
+      GRPC_GATEWAY_ADDR: 50101
+      DD_SERVICE: dogfood
+    networks:
+      - default
+    depends_on:
+      - postgres
+  redis:
+      image: redis
+      ports:
+          - 6379:6379
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    restart: always
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: dogfood
+      POSTGRES_PASSWORD: dogfood
+      POSTGRES_DB: dogfood
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
