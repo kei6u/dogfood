@@ -11,46 +11,62 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME_GATEWAY: ${{ github.repository }}-gateway
+  IMAGE_NAME_BACKEND: ${{ github.repository }}-backend
 
 jobs:
-  build-and-push-image:
+  build-and-push-gateway-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
       - name: Log in to the Container registry
         uses: docker/login-action@v1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_GATEWAY }}
       - name: Build and push gateway Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./cmd/gateway/Dockerfile
           push: true
-          tags: -gateway${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Build and push backend Docker image
+  build-and-push-backend-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Log in to the Container registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}
+      - name: Build and push gateway Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./cmd/backend/Dockerfile
           push: true
-          tags: -backend${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
