@@ -12,9 +12,9 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/kei6u/dogfood/pkg/ddconfig"
 	dogfoodpb "github.com/kei6u/dogfood/proto/v1/dogfood"
 	healthcheckpb "github.com/kei6u/dogfood/proto/v1/healthcheck"
 	_ "github.com/lib/pq"
@@ -24,7 +24,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
@@ -67,6 +66,14 @@ func (s *Server) Start(ctx context.Context) {
 			s.logger.Warn("failed to register gRPC metrics to prometheus", zap.Error(err))
 			return
 		}
+		if err := r.Register(dogfoodGramGuage); err != nil {
+			s.logger.Warn("failed to register dogfood gram guage to prometheus", zap.Error(err))
+			return
+		}
+		if err := r.Register(dogfoodNameCount); err != nil {
+			s.logger.Warn("failed to register dogfood name count to prometheus", zap.Error(err))
+			return
+		}
 		if err := (&http.Server{
 			Handler: promhttp.HandlerFor(r, promhttp.HandlerOpts{}),
 			Addr:    ":9092",
@@ -89,13 +96,8 @@ func (s *Server) Start(ctx context.Context) {
 		grpcsvc := grpc.NewServer(
 			grpc_middleware.WithUnaryServerChain(
 				grpc_recovery.UnaryServerInterceptor(),
+				ddtracerUnaryServerInterceptor(),
 				grpcMetrics.UnaryServerInterceptor(),
-				grpc_opentracing.UnaryServerInterceptor(
-					grpc_opentracing.WithTracer(opentracer.New(tracer.WithAnalytics(true))),
-					grpc_opentracing.WithFilterFunc(func(_ context.Context, fullMethodName string) bool {
-						return !strings.Contains(fullMethodName, "healthcheck")
-					}),
-				),
 				grpc_zap.UnaryServerInterceptor(
 					s.logger,
 					grpc_zap.WithDecider(func(fullMethodName string, _ error) bool {
@@ -155,7 +157,7 @@ func (s *Server) Start(ctx context.Context) {
 		s.logger.Info("gRPC-Gateway Server starts", zap.String("address", s.gRPCGWAddr))
 		if err := (&http.Server{
 			Addr:    s.gRPCGWAddr,
-			Handler: gwmux,
+			Handler: s.tracingWrapper(gwmux),
 		}).ListenAndServe(); err != nil {
 			s.logger.Warn("gRPC-Gateway fails to start", zap.Error(err))
 			return
@@ -163,4 +165,17 @@ func (s *Server) Start(ctx context.Context) {
 	}()
 
 	wg.Wait()
+}
+
+func (s *Server) tracingWrapper(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sctx, err := tracer.Extract(r.Header)
+		if err == nil {
+			span := tracer.StartSpan(ddconfig.GetService(ddconfig.WithServiceSuffix(".grpcgateway")), tracer.ChildOf(sctx))
+			defer span.Finish()
+		} else {
+			s.logger.Error("failed to extract span context, but proceed http request", zap.Error(err))
+		}
+		h.ServeHTTP(w, r)
+	})
 }

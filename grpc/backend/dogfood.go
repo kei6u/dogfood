@@ -6,13 +6,19 @@ import (
 	"time"
 
 	"github.com/gogo/status"
+	"github.com/kei6u/dogfood/pkg/ddconfig"
 	dogfoodpb "github.com/kei6u/dogfood/proto/v1/dogfood"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRequest) (*dogfoodpb.Record, error) {
+	if s, ok := tracer.SpanFromContext(ctx); ok {
+		span := tracer.StartSpan(ddconfig.GetService(ddconfig.WithServiceSuffix(".CreateRecord")), tracer.ChildOf(s.Context()))
+		defer span.Finish()
+	}
 	eatenAt := time.Now()
 	if err := s.db.QueryRowContext(
 		ctx,
@@ -30,6 +36,10 @@ func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRe
 }
 
 func (s *Server) ListRecords(ctx context.Context, req *dogfoodpb.ListRecordsRequest) (*dogfoodpb.ListRecordsResponse, error) {
+	if s, ok := tracer.SpanFromContext(ctx); ok {
+		span := tracer.StartSpan(ddconfig.GetService(ddconfig.WithServiceSuffix(".ListRecords")), tracer.ChildOf(s.Context()))
+		defer span.Finish()
+	}
 	rows, err := s.db.QueryContext(
 		ctx,
 		"SELECT * FROM record WHERE eaten_at >= $1 AND eaten_at < $2 LIMIT $3",

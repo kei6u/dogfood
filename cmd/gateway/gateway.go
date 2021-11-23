@@ -13,6 +13,7 @@ import (
 	redisrate "github.com/go-redis/redis_rate/v9"
 	"github.com/kei6u/dogfood/pkg/httplib"
 	"go.uber.org/zap"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 type gateway struct {
@@ -46,9 +47,23 @@ func (gw *gateway) registerReverseProxy(addr string, patterns []string) error {
 
 func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 	return pattern, func(w http.ResponseWriter, r *http.Request) {
+		span, ctx := tracer.StartSpanFromContext(r.Context(), "gateway")
+		fields := []zap.Field{
+			zap.Uint64("dd.trace_id", span.Context().TraceID()),
+			zap.Uint64("dd.span_id", span.Context().SpanID()),
+		}
+		defer span.Finish()
+		r = r.WithContext(ctx)
+		if err := tracer.Inject(span.Context(), tracer.HTTPHeadersCarrier(r.Header)); err != nil {
+			gw.l.Error("failed to inject span", append(fields, zap.Error(err))...)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Sprintf("failed to inject span: 5v", err)))
+			return
+		}
+
 		addr, ok := gw.addrLookup[pattern]
 		if !ok {
-			gw.l.Error("requested pattern is not found", zap.String("pattern", pattern))
+			gw.l.Error("requested pattern is not found", append(fields, zap.String("pattern", pattern))...)
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(fmt.Sprintf("%s is not found", pattern)))
 			return
@@ -56,7 +71,7 @@ func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 
 		ip := httplib.GetIP(r)
 		if ip == nil {
-			gw.l.Error(fmt.Sprintf("ip address: %s is invalid format", ip.String()))
+			gw.l.Error(fmt.Sprintf("ip address: %s is invalid format", ip.String()), fields...)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("ip address is missing"))
 			return
@@ -64,7 +79,7 @@ func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 
 		s, err := gw.ratelimit(w, r, pattern, ip)
 		if err != nil {
-			gw.l.Error("request failed", zap.Error(err))
+			gw.l.Error("request failed", append(fields, zap.Error(err))...)
 			w.WriteHeader(s)
 			w.Write([]byte(err.Error()))
 			return
@@ -76,6 +91,13 @@ func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 }
 
 func (gw *gateway) ratelimit(w http.ResponseWriter, r *http.Request, pattern string, ip net.IP) (int, error) {
+	sctx, err := tracer.Extract(tracer.HTTPHeadersCarrier(r.Header))
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("failed to extract span context: %v", err)
+	}
+	span := tracer.StartSpan("gateway.ratelimit", tracer.ChildOf(sctx))
+	defer span.Finish()
+
 	key := fmt.Sprintf("%s %s", ip.String(), pattern)
 	res, err := gw.limiter.Allow(r.Context(), key, getLimit())
 	if err != nil {
