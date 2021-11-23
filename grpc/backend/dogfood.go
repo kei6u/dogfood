@@ -19,7 +19,7 @@ func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRe
 		"INSERT INTO record (dogfood_name, gram, dog_name, eaten_at) VALUES ($1, $2, $3, $4)",
 		req.GetDogfoodName(), req.GetGram(), req.GetDogName(), eatenAt,
 	).Err(); err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create a record: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to create a record: %s", err)
 	}
 	return &dogfoodpb.Record{
 		DogfoodName: req.GetDogfoodName(),
