@@ -7,7 +7,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/kei6u/dogfood-gateway
   pullPolicy: IfNotPresent
-  tag: 0.1.0-rc.2
+  tag: 0.1.0-rc.3
 
 imagePullSecrets: []
 nameOverride: ""
@@ -59,7 +59,7 @@ env: []
   #   value: production
 
 redisConfig:
-  host: dogfood-gateway-redis
+  host: dogfood-gateway-redis-master
   addr: 6379
 
 autoscaling:
