@@ -57,7 +57,7 @@ func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 		if err := tracer.Inject(span.Context(), tracer.HTTPHeadersCarrier(r.Header)); err != nil {
 			gw.l.Error("failed to inject span", append(fields, zap.Error(err))...)
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("failed to inject span: 5v", err)))
+			w.Write([]byte(fmt.Sprintf("failed to inject span: %v", err)))
 			return
 		}
 
