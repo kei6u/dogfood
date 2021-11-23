@@ -19,8 +19,11 @@ import (
 )
 
 const (
-	createRecordEndpoint = "/v1/dogfood/record"
-	listRecordsEndpoint  = "/v1/dogfood/records"
+	createRecordEndpoint   = "/v1/dogfood/record"
+	listRecordsEndpoint    = "/v1/dogfood/records"
+	livenessProbeEndpoint  = "/v1/healthcheck/livenessProbe"
+	readinessProbeEndpoint = "/v1/healthcheck/readinessProbe"
+	startupProbeEndpoint   = "/v1/healthcheck/startupProbe"
 )
 
 func main() {
@@ -41,9 +44,9 @@ func main() {
 	}
 	defer profiler.Stop()
 
+	// Loading environment variables.
 	var addr string
 	var dogfoodBackendAddr string
-
 	if addr = os.Getenv("ADDR"); addr == "" {
 		logger.Fatal("ADDR is missing")
 	}
@@ -53,6 +56,7 @@ func main() {
 
 	ctx := context.Background()
 
+	// Creating connection with Redis.
 	r, rClose, err := driver.NewRedis(ctx)
 	if err != nil {
 		logger.Fatal("failed to initialize redis client", zap.Error(err))
@@ -71,8 +75,33 @@ func main() {
 		logger.Fatal("failed to register a revere proxy to gateway", zap.Error(err))
 	}
 
+	// Reverse Proxy
 	http.HandleFunc(createRecordEndpoint, gw.rateLimit(createRecordEndpoint))
 	http.HandleFunc(listRecordsEndpoint, gw.rateLimit(listRecordsEndpoint))
+
+	// Health check
+	http.HandleFunc(livenessProbeEndpoint, func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	http.HandleFunc(readinessProbeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
+		if err := r.Ping(ctx).Err(); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(fmt.Sprintf("failed to readiness probe: %s", err)))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	http.HandleFunc(startupProbeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
+		if err := r.Set(ctx, startupProbeEndpoint, true, time.Second).Err(); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(fmt.Sprintf("failed to startup probe: %s", err)))
+			return
+		}
+		if _, err := r.Get(ctx, startupProbeEndpoint).Result(); err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte(fmt.Sprintf("failed to startup probe: %s", err)))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 
 	logger.Info("gateway has started", zap.String("port", addr))
 	http.ListenAndServe(fmt.Sprintf(":%s", addr), nil)
