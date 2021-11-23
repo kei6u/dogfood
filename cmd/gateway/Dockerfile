@@ -7,9 +7,10 @@ RUN go mod download
 
 COPY cmd/gateway cmd/gateway
 COPY driver driver
+COPY pkg pkg
 
 WORKDIR /workspace/cmd/gateway
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o app main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o app *.go
 
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
