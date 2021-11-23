@@ -79,21 +79,24 @@ func main() {
 	http.HandleFunc(livenessProbeEndpoint, func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	http.HandleFunc(readinessProbeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		if err := r.Ping(ctx).Err(); err != nil {
+			logger.Error("readiness probe failed", zap.Error(err))
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(fmt.Sprintf("failed to readiness probe: %s", err)))
+			w.Write([]byte(fmt.Sprintf("readiness probe failed: %s", err)))
 			return
 		}
 		w.WriteHeader(http.StatusOK)
 	})
 	http.HandleFunc(startupProbeEndpoint, func(w http.ResponseWriter, _ *http.Request) {
 		if err := r.Set(ctx, startupProbeEndpoint, true, time.Second).Err(); err != nil {
+			logger.Error("startup probe failed", zap.Error(err))
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(fmt.Sprintf("failed to startup probe: %s", err)))
+			w.Write([]byte(fmt.Sprintf("startup probe failed: %s", err)))
 			return
 		}
 		if _, err := r.Get(ctx, startupProbeEndpoint).Result(); err != nil {
+			logger.Error("startup probe failed", zap.Error(err))
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(fmt.Sprintf("failed to startup probe: %s", err)))
+			w.Write([]byte(fmt.Sprintf("startup probe failed: %s", err)))
 			return
 		}
 		w.WriteHeader(http.StatusOK)
