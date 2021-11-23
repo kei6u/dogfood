@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/kei6u/dogfood/driver"
-	dogfoodgrpc "github.com/kei6u/dogfood/grpc"
+	grpcbackend "github.com/kei6u/dogfood/grpc/backend"
 	"go.uber.org/zap"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
@@ -46,7 +46,7 @@ func main() {
 	}()
 
 	go func() {
-		dogfoodgrpc.NewServer(os.Getenv("GRPC_ADDR"), os.Getenv("GRPC_GATEWAY_ADDR"), logger, db).Start(ctx)
+		grpcbackend.NewServer(os.Getenv("GRPC_ADDR"), os.Getenv("GRPC_GATEWAY_ADDR"), logger, db).Start(ctx)
 	}()
 
 	<-ctx.Done()

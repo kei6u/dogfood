@@ -1,4 +1,4 @@
-package dogfood_grpc
+package grpc_backend
 
 import (
 	"context"
