@@ -97,6 +97,7 @@ func (s *Server) Start(ctx context.Context) {
 			grpc_middleware.WithUnaryServerChain(
 				grpc_recovery.UnaryServerInterceptor(),
 				ddtracerUnaryServerInterceptor(),
+				metricsUnaryServerInterceptor(),
 				grpcMetrics.UnaryServerInterceptor(),
 				grpc_zap.UnaryServerInterceptor(
 					s.logger,
