@@ -9,6 +9,7 @@ COPY cmd/backend cmd/backend
 COPY driver driver
 COPY grpc/backend grpc/backend
 COPY proto proto
+COPY pkg pkg
 
 WORKDIR /workspace/cmd/backend
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o app main.go
