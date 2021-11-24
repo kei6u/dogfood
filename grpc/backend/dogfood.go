@@ -15,10 +15,10 @@ import (
 )
 
 func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRequest) (*dogfoodpb.Record, error) {
-	if s, ok := tracer.SpanFromContext(ctx); ok {
-		span := tracer.StartSpan(ddconfig.GetService(ddconfig.WithServiceSuffix(".CreateRecord")), tracer.ChildOf(s.Context()))
-		defer span.Finish()
-	}
+	var span tracer.Span
+	span, ctx = tracer.StartSpanFromContext(ctx, ddconfig.GetService(ddconfig.WithServiceSuffix(".CreateRecord")))
+	defer span.Finish()
+
 	eatenAt := time.Now()
 	if err := s.db.QueryRowContext(
 		ctx,
@@ -36,10 +36,10 @@ func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRe
 }
 
 func (s *Server) ListRecords(ctx context.Context, req *dogfoodpb.ListRecordsRequest) (*dogfoodpb.ListRecordsResponse, error) {
-	if s, ok := tracer.SpanFromContext(ctx); ok {
-		span := tracer.StartSpan(ddconfig.GetService(ddconfig.WithServiceSuffix(".ListRecords")), tracer.ChildOf(s.Context()))
-		defer span.Finish()
-	}
+	var span tracer.Span
+	span, ctx = tracer.StartSpanFromContext(ctx, ddconfig.GetService(ddconfig.WithServiceSuffix(".ListRecords")))
+	defer span.Finish()
+
 	rows, err := s.db.QueryContext(
 		ctx,
 		"SELECT * FROM record WHERE eaten_at >= $1 AND eaten_at < $2 LIMIT $3",
