@@ -71,7 +71,7 @@ spec:
           - name: RATE_LIMIT_VOLUME
             value: {{ .Values.ratelimitConfig.volume | quote }}
           - name: DD_SERVICE
-            value: dogfood.gatewaay
+            value: dogfood.gateway
           - name: DD_VERSION
             value: {{ .Values.image.tag | default .Chart.AppVersion }}
           - name: DD_AGENT_HOST
