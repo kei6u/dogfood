@@ -182,7 +182,7 @@ func (s *Server) Start(ctx context.Context) {
 			Addr: s.gRPCGWAddr,
 			Handler: http_dd.WrapHandler(
 				gwmux,
-				ddconfig.GetService(ddconfig.WithServiceSuffix("grpcgateway")),
+				ddconfig.GetService(ddconfig.WithServiceSuffix(".grpcgateway")),
 				"",
 				http_dd.WithAnalytics(true),
 				http_dd.WithIgnoreRequest(func(r *http.Request) bool {
