@@ -11,6 +11,7 @@ import (
 	"time"
 
 	redisrate "github.com/go-redis/redis_rate/v9"
+	"github.com/kei6u/dogfood/pkg/ddconfig"
 	"github.com/kei6u/dogfood/pkg/httplib"
 	"go.uber.org/zap"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -47,7 +48,7 @@ func (gw *gateway) registerReverseProxy(addr string, patterns []string) error {
 
 func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 	return pattern, func(w http.ResponseWriter, r *http.Request) {
-		span, ctx := tracer.StartSpanFromContext(r.Context(), "gateway")
+		span, ctx := tracer.StartSpanFromContext(r.Context(), ddconfig.GetService())
 		fields := []zap.Field{
 			zap.Uint64("dd.trace_id", span.Context().TraceID()),
 			zap.Uint64("dd.span_id", span.Context().SpanID()),
@@ -85,7 +86,7 @@ func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 			return
 		}
 
-		gw.l.Info(fmt.Sprintf("%s to %s:%s", pattern, addr, pattern))
+		gw.l.Info(fmt.Sprintf("reverse proxy: %s to %s:%s", pattern, addr, pattern), fields...)
 		gw.rpLookup[addr].ServeHTTP(w, r)
 	}
 }

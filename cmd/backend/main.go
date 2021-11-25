@@ -9,12 +9,16 @@ import (
 	"github.com/kei6u/dogfood/driver"
 	grpcbackend "github.com/kei6u/dogfood/grpc/backend"
 	"go.uber.org/zap"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 )
 
 func main() {
 	logger, _ := zap.NewProduction()
 	defer logger.Sync()
+
+	tracer.Start(tracer.WithAnalytics(true))
+	defer tracer.Stop()
 
 	if err := profiler.Start(
 		profiler.WithProfileTypes(
