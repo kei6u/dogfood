@@ -51,8 +51,8 @@ addr: 50001
 dogfoodBackendAddr: http://dogfood-backend:50101
 
 ratelimitConfig:
-  unit: hour
-  volume: 60
+  timeUnit: hour
+  limit: 60
 
 env: []
   # - name: DD_ENV

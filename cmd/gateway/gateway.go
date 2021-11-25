@@ -104,10 +104,10 @@ func (gw *gateway) ratelimit(w http.ResponseWriter, r *http.Request, pattern str
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to allow request to %s from %s: %v", ip.String(), pattern, err)
 	}
-	w.Header().Set("RateLimit-Remaining", strconv.Itoa(res.Remaining))
+	w.Header().Set("X-RateLimit-Remaining", strconv.Itoa(res.Remaining))
 	if res.Allowed == 0 {
 		retryAfter := strconv.Itoa(int(res.RetryAfter / time.Second))
-		w.Header().Set("RateLimit-RetryAfter-Second", retryAfter)
+		w.Header().Set("X-RateLimit-Reset", retryAfter)
 		return http.StatusTooManyRequests, fmt.Errorf("exceeds rate limit, retry in %s second(s", retryAfter)
 	}
 	return http.StatusOK, nil
@@ -115,8 +115,8 @@ func (gw *gateway) ratelimit(w http.ResponseWriter, r *http.Request, pattern str
 
 // For dynamic rate limit configuration.
 var (
-	defaultLimit redisrate.Limit                      = redisrate.PerHour(60)
-	limitByUnit  map[string]func(int) redisrate.Limit = map[string]func(int) redisrate.Limit{
+	defaultLimit    redisrate.Limit                      = redisrate.PerHour(60)
+	limitByTimeUnit map[string]func(int) redisrate.Limit = map[string]func(int) redisrate.Limit{
 		"second": redisrate.PerSecond,
 		"Second": redisrate.PerSecond,
 		"SECOND": redisrate.PerSecond,
@@ -131,18 +131,18 @@ var (
 
 func getLimit() redisrate.Limit {
 	var unit string
-	var vol string
-	if unit = os.Getenv("RATELIMIT_UNIT"); unit == "" {
+	var limit string
+	if unit = os.Getenv("RATELIMIT_TIME_UNIT"); unit == "" {
 		return defaultLimit
 	}
-	if vol = os.Getenv("RATELIMIT_VOLUME"); vol == "" {
+	if limit = os.Getenv("RATELIMIT_LIMIT"); limit == "" {
 		return defaultLimit
 	}
-	l, ok := limitByUnit[unit]
+	l, ok := limitByTimeUnit[unit]
 	if !ok {
 		return defaultLimit
 	}
-	v, err := strconv.Atoi(vol)
+	v, err := strconv.Atoi(limit)
 	if err != nil {
 		return defaultLimit
 	}

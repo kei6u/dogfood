@@ -12,8 +12,8 @@ services:
       REDIS_HOST: redis  # match service name of redis.
       REDIS_ADDR: 6379
       REDIS_PASSWORD: redis
-      RATELIMIT_UNIT: minute
-      RATELIMIT_VOLUME: 10
+      RATELIMIT_TIME_UNIT: minute
+      RATELIMIT_LIMIT: 10
     networks:
       - default
     depends_on:

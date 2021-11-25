@@ -66,10 +66,10 @@ spec:
             value: {{ .Values.redisConfig.addr | quote }}
           - name: REDIS_PASSWORD
             value: {{ .Values.redisConfig.password }}
-          - name: RATE_LIMIT_UNIT
-            value: {{ .Values.ratelimitConfig.unit }}
-          - name: RATE_LIMIT_VOLUME
-            value: {{ .Values.ratelimitConfig.volume | quote }}
+          - name: RATELIMIT_TIME_UNIT
+            value: {{ .Values.ratelimitConfig.timeUnit }}
+          - name: RATELIMIT_LIMIT
+            value: {{ .Values.ratelimitConfig.limit | quote }}
           - name: DD_SERVICE
             value: dogfood.gateway
           - name: DD_VERSION
