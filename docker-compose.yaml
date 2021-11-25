@@ -25,6 +25,7 @@ services:
     ports:
       - 50100:50100
       - 50101:50101
+      - 9092:9092 # metrics
     environment:
       POSTGRES_HOST: postgres # match service name of postgres.
       POSTGRES_PORT: 5432
