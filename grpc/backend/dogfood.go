@@ -16,7 +16,7 @@ import (
 
 func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRequest) (*dogfoodpb.Record, error) {
 	var span tracer.Span
-	span, ctx = tracer.StartSpanFromContext(ctx, ddconfig.GetService(ddconfig.WithServiceSuffix(".CreateRecord")))
+	span, ctx = tracer.StartSpanFromContext(ctx, ddconfig.GetService(), tracer.ResourceName("CreateRecord"))
 	defer span.Finish()
 
 	eatenAt := time.Now()
@@ -37,7 +37,7 @@ func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRe
 
 func (s *Server) ListRecords(ctx context.Context, req *dogfoodpb.ListRecordsRequest) (*dogfoodpb.ListRecordsResponse, error) {
 	var span tracer.Span
-	span, ctx = tracer.StartSpanFromContext(ctx, ddconfig.GetService(ddconfig.WithServiceSuffix(".ListRecords")))
+	span, ctx = tracer.StartSpanFromContext(ctx, ddconfig.GetService(), tracer.ResourceName("ListRecords"))
 	defer span.Finish()
 
 	rows, err := s.db.QueryContext(

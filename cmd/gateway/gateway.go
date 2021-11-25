@@ -48,7 +48,7 @@ func (gw *gateway) registerReverseProxy(addr string, patterns []string) error {
 
 func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 	return pattern, func(w http.ResponseWriter, r *http.Request) {
-		span, ctx := tracer.StartSpanFromContext(r.Context(), ddconfig.GetService())
+		span, ctx := tracer.StartSpanFromContext(r.Context(), ddconfig.GetService(), tracer.ResourceName(pattern))
 		fields := []zap.Field{
 			zap.Uint64("dd.trace_id", span.Context().TraceID()),
 			zap.Uint64("dd.span_id", span.Context().SpanID()),
@@ -96,7 +96,7 @@ func (gw *gateway) ratelimit(w http.ResponseWriter, r *http.Request, pattern str
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to extract span context: %v", err)
 	}
-	span := tracer.StartSpan("gateway.ratelimit", tracer.ChildOf(sctx))
+	span := tracer.StartSpan(ddconfig.GetService(ddconfig.WithServiceSuffix(".ratelimit")), tracer.ChildOf(sctx))
 	defer span.Finish()
 
 	key := fmt.Sprintf("%s %s", ip.String(), pattern)

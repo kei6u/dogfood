@@ -114,12 +114,7 @@ func main() {
 			"",
 			http_dd.WithAnalytics(true),
 			http_dd.WithIgnoreRequest(func(r *http.Request) bool {
-				for _, uri := range []string{livenessProbeRequestURI, readinessProbeRequestURI, startupProbeRequestURI} {
-					if strings.EqualFold(uri, r.RequestURI) {
-						return true
-					}
-				}
-				return false
+				return strings.Contains(strings.ToLower(r.RequestURI), "healthcheck")
 			}),
 		),
 	}).ListenAndServe(); err != nil {
