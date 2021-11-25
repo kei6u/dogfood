@@ -1,0 +1,42 @@
+global:
+  postgresql:
+    postgresqlDatabase: dogfoodbackend
+    postgresqlUsername: postgres
+    postgresqlPassword: postgres
+initdbUser: postgres
+initdbPassword: postgres
+initdbScripts:
+  init.sql: |
+    -- Create a database for dogfoodbackend
+    CREATE USER dogfoodbackend WITH PASSWORD 'dogfoodbackend';
+    CREATE TABLE record
+    (
+      dogfood_name varchar(50) NOT NULL,
+      gram INTEGER NOT NULL,
+      dog_name varchar(50) NOT NULL,
+      eaten_at TIMESTAMP NOT NULL,
+      PRIMARY KEY(dogfood_name, dog_name, eaten_at)
+    );
+    GRANT ALL PRIVILEGES ON record TO dogfoodbackend;
+    -- Grant the Agent Access
+    -- see: https://docs.datadoghq.com/database_monitoring/setup_postgres/selfhosted/?tab=postgres10#grant-the-agent-access
+    CREATE USER datadog WITH password 'datadog';
+    CREATE SCHEMA datadog;
+    GRANT USAGE ON SCHEMA datadog TO datadog;
+    GRANT USAGE ON SCHEMA public TO datadog;
+    GRANT pg_monitor TO datadog;
+    CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+    CREATE OR REPLACE FUNCTION datadog.explain_statement (
+      l_query text,
+      out explain JSON
+    )
+    RETURNS SETOF JSON AS
+    $$
+    BEGIN
+      RETURN QUERY EXECUTE 'EXPLAIN (FORMAT JSON) ' || l_query;
+    END;
+    $$
+    LANGUAGE 'plpgsql'
+    RETURNS NULL ON NULL INPUT
+    SECURITY DEFINER;
+# configurationConfigMap: custom-postgreql
