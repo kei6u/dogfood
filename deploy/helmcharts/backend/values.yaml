@@ -48,8 +48,8 @@ resources:
     memory: 128Mi
 
 ports:
-  grpc: 50050
-  grpcGateway: 50051
+  grpc: 50100
+  grpcGateway: 50101
 
 env: []
   # - name: DD_ENV
@@ -58,11 +58,11 @@ env: []
 # Configure for Postgres which will be deployed in same namespace
 # and run as a StatefulSet
 postgresConfig:
-  host: dogfood-backend-postgresql
+  host: dogfood-backend-postgresql-headless
   port: 5432
-  user: dogfood-backend
-  password: dogfood-backend
-  db: dogfood-backend
+  user: dogfoodbackend
+  password: dogfoodbackend
+  db: dogfoodbackend
 
 autoscaling:
   enabled: true
