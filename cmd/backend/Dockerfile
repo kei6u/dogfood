@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY cmd/backend cmd/backend
 COPY driver driver
-COPY grpc/backend grpc/backend
+COPY grpc grpc
 COPY proto proto
 COPY pkg pkg
 
