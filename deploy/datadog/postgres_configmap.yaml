@@ -4,7 +4,7 @@ data:
     init_config:
     instances:
       - dbm: true
-        host: dogfood-backend-postgresql.svc.cluster.local
+        host: dogfood-backend-postgresql-headless.svc.cluster.local
         port: 5432
         username: datadog
         password: datadog
