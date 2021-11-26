@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	redisrate "github.com/go-redis/redis_rate/v9"
@@ -105,8 +107,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	logger.Info("dogfood gateway has started", zap.String("port", addr))
-	if err := (&http.Server{
+	s := &http.Server{
 		Addr: fmt.Sprintf(":%s", addr),
 		Handler: http_dd.WrapHandler(
 			http.DefaultServeMux,
@@ -117,8 +118,25 @@ func main() {
 				return strings.Contains(strings.ToLower(r.RequestURI), "healthcheck")
 			}),
 		),
-	}).ListenAndServe(); err != nil {
-		logger.Warn("dogfood gateway fails to start", zap.Error(err))
-		return
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGINT, syscall.SIGTERM)
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(context.Background())
+
+	go func() {
+		logger.Info("dogfood gateway has started", zap.String("port", addr))
+		if err := s.ListenAndServe(); err != nil {
+			logger.Info("failed to listen and serve", zap.Error(err))
+		}
+	}()
+	go func() {
+		<-c
+		logger.Info("dogfood gateway is shutting down")
+		s.Shutdown(ctx)
+		cancel()
+	}()
+
+	<-ctx.Done()
 }
