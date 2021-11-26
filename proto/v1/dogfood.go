@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gogo/status"
-	"github.com/kei6u/dogfood/pkg/ddconfig"
 	dogfoodpb "github.com/kei6u/dogfood/proto/v1/dogfood"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc/codes"
@@ -16,7 +15,7 @@ import (
 
 func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRequest) (*dogfoodpb.Record, error) {
 	var span tracer.Span
-	span, ctx = tracer.StartSpanFromContext(ctx, ddconfig.GetService(), tracer.ResourceName("CreateRecord"))
+	span, ctx = tracer.StartSpanFromContext(ctx, "CreateRecord", tracer.ResourceName("Record"))
 	defer span.Finish()
 
 	eatenAt := time.Now()
@@ -37,7 +36,7 @@ func (s *Server) CreateRecord(ctx context.Context, req *dogfoodpb.CreateRecordRe
 
 func (s *Server) ListRecords(ctx context.Context, req *dogfoodpb.ListRecordsRequest) (*dogfoodpb.ListRecordsResponse, error) {
 	var span tracer.Span
-	span, ctx = tracer.StartSpanFromContext(ctx, ddconfig.GetService(), tracer.ResourceName("ListRecords"))
+	span, ctx = tracer.StartSpanFromContext(ctx, "ListRecords", tracer.ResourceName("Records"))
 	defer span.Finish()
 
 	rows, err := s.db.QueryContext(
