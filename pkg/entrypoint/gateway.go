@@ -106,7 +106,6 @@ func RunGateway() {
 			http.DefaultServeMux,
 			ddconfig.GetService(),
 			"",
-			http_dd.WithAnalytics(true),
 			http_dd.WithIgnoreRequest(func(r *http.Request) bool {
 				return strings.Contains(strings.ToLower(r.RequestURI), "healthcheck")
 			}),

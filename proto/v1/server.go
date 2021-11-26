@@ -134,7 +134,6 @@ func (s *Server) initializegRPCServer() {
 		grpc_middleware.WithUnaryServerChain(
 			grpc_recovery.UnaryServerInterceptor(),
 			grpc_dd.UnaryServerInterceptor(
-				grpc_dd.WithAnalytics(true),
 				grpc_dd.WithIgnoredMethods(ignoreMethods...),
 			),
 			metricsUnaryServerInterceptor(),
@@ -197,7 +196,6 @@ func (s *Server) initializegRPCGatewayServer(ctx context.Context) error {
 			gwmux,
 			ddconfig.GetService(ddconfig.WithServiceSuffix(".grpcgateway")),
 			"",
-			http_dd.WithAnalytics(true),
 			http_dd.WithIgnoreRequest(func(r *http.Request) bool {
 				return strings.Contains(strings.ToLower(r.RequestURI), "healthcheck")
 			}),
