@@ -132,6 +132,7 @@ func RunGateway() {
 	}()
 
 	<-ctx.Done()
+	logger.Info("bye~~")
 }
 
 type gateway struct {
