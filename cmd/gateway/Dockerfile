@@ -7,7 +7,6 @@ RUN go mod download
 
 COPY cmd/gateway cmd/gateway
 COPY driver driver
-COPY grpc grpc
 COPY proto proto
 COPY pkg pkg
 

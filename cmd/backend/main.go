@@ -1,7 +1,7 @@
 package main
 
-import "github.com/kei6u/dogfood/pkg/app"
+import "github.com/kei6u/dogfood/pkg/entrypoint"
 
 func main() {
-	app.RunBackend()
+	entrypoint.RunBackend()
 }

@@ -1,4 +1,4 @@
-package grpc_backend
+package protov1
 
 import (
 	"context"

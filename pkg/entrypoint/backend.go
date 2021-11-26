@@ -1,4 +1,4 @@
-package app
+package entrypoint
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/kei6u/dogfood/driver"
-	grpcbackend "github.com/kei6u/dogfood/grpc/backend"
+	protov1 "github.com/kei6u/dogfood/proto/v1"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +33,7 @@ func RunBackend() {
 		cancel()
 	}()
 
-	s, err := grpcbackend.NewServer(
+	s, err := protov1.NewServer(
 		ctx,
 		os.Getenv("GRPC_ADDR"),
 		os.Getenv("GRPC_GATEWAY_ADDR"),

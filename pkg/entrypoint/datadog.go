@@ -1,4 +1,4 @@
-package app
+package entrypoint
 
 import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
