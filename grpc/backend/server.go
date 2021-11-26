@@ -120,7 +120,6 @@ func (s *Server) Start(ctx context.Context) {
 						return !strings.Contains(fullMethodName, "healthcheck")
 					}),
 					grpc_zap.WithMessageProducer(func(ctx context.Context, msg string, level zapcore.Level, code codes.Code, err error, duration zapcore.Field) {
-						// inject trace ID into logs
 						if dds, ok := tracer.SpanFromContext(ctx); ok {
 							grpc_zap.AddFields(
 								ctx,
