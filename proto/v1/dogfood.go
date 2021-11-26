@@ -47,7 +47,7 @@ func (s *Server) ListRecords(ctx context.Context, req *dogfoodpb.ListRecordsRequ
 	)
 	defer rows.Close()
 	if err == sql.ErrNoRows {
-		return nil, status.Error(codes.NotFound, "no record exists")
+		return nil, status.Error(codes.NotFound, "no record are found")
 	}
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list up records: %s", err)
@@ -64,6 +64,9 @@ func (s *Server) ListRecords(ctx context.Context, req *dogfoodpb.ListRecordsRequ
 	}
 	if err = rows.Err(); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to list data: %s", err)
+	}
+	if len(rs) == 0 {
+		return nil, status.Error(codes.NotFound, "no record are found")
 	}
 	return &dogfoodpb.ListRecordsResponse{
 		Records: rs,
