@@ -11,3 +11,8 @@ plugins:
   - name: grpc-gateway
     out: .
     opt: paths=source_relative
+  - name: doc
+    out: .
+    opt:
+      - markdown
+      - api_reference.md

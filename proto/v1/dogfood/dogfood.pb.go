@@ -27,9 +27,12 @@ type CreateRecordRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// dog_food name is a name of dogfood brand.
 	DogfoodName string `protobuf:"bytes,1,opt,name=dogfood_name,json=dogfoodName,proto3" json:"dogfood_name,omitempty"`
-	Gram        int32  `protobuf:"varint,2,opt,name=gram,proto3" json:"gram,omitempty"`
-	DogName     string `protobuf:"bytes,3,opt,name=dog_name,json=dogName,proto3" json:"dog_name,omitempty"`
+	// grap specifies how grams a dog eat dogfood.
+	Gram int32 `protobuf:"varint,2,opt,name=gram,proto3" json:"gram,omitempty"`
+	// dog_name specifies a name of dog.
+	DogName string `protobuf:"bytes,3,opt,name=dog_name,json=dogName,proto3" json:"dog_name,omitempty"`
 }
 
 func (x *CreateRecordRequest) Reset() {
@@ -90,9 +93,12 @@ type ListRecordsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	From     *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	PageSize int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	To       *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=to,proto3" json:"to,omitempty"`
+	// from specifies the start time of eaten_at.
+	From *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	// page_size specifies a requested length of records.
+	PageSize int32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// to specifies the end time of eaten_at.
+	To *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=to,proto3" json:"to,omitempty"`
 }
 
 func (x *ListRecordsRequest) Reset() {
@@ -153,8 +159,10 @@ type ListRecordsResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Records []*Record              `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
-	To      *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	// records specify an array of Record.
+	Records []*Record `protobuf:"bytes,1,rep,name=records,proto3" json:"records,omitempty"`
+	// to specifies the end time of eaten_at.
+	To *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
 }
 
 func (x *ListRecordsResponse) Reset() {
@@ -208,10 +216,14 @@ type Record struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	DogfoodName string                 `protobuf:"bytes,1,opt,name=dogfood_name,json=dogfoodName,proto3" json:"dogfood_name,omitempty"`
-	Gram        int32                  `protobuf:"varint,2,opt,name=gram,proto3" json:"gram,omitempty"`
-	DogName     string                 `protobuf:"bytes,3,opt,name=dog_name,json=dogName,proto3" json:"dog_name,omitempty"`
-	EatenAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=eaten_at,json=eatenAt,proto3" json:"eaten_at,omitempty"`
+	// dog_food name is a name of dogfood brand.
+	DogfoodName string `protobuf:"bytes,1,opt,name=dogfood_name,json=dogfoodName,proto3" json:"dogfood_name,omitempty"`
+	// grap specifies how grams a dog eat dogfood.
+	Gram int32 `protobuf:"varint,2,opt,name=gram,proto3" json:"gram,omitempty"`
+	// dog_name specifies a name of dog.
+	DogName string `protobuf:"bytes,3,opt,name=dog_name,json=dogName,proto3" json:"dog_name,omitempty"`
+	// eaten_at specifies what time a dog ate a dogfood.
+	EatenAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=eaten_at,json=eatenAt,proto3" json:"eaten_at,omitempty"`
 }
 
 func (x *Record) Reset() {

@@ -25,24 +25,36 @@ service DogFoodService {
 }
 
 message CreateRecordRequest {
+  // dog_food name is a name of dogfood brand.
 	string dogfood_name = 1;
+  // grap specifies how grams a dog eat dogfood.
 	int32 gram = 2;
+  // dog_name specifies a name of dog.
   string dog_name = 3;
 }
 
 message ListRecordsRequest {
+  // from specifies the start time of eaten_at.
   google.protobuf.Timestamp from = 1;
+  // page_size specifies a requested length of records.
   int32 page_size = 2;
+  // to specifies the end time of eaten_at.
   google.protobuf.Timestamp to = 3;
 }
 message ListRecordsResponse {
+  // records specify an array of Record.
   repeated Record records = 1;
+  // to specifies the end time of eaten_at.
   google.protobuf.Timestamp to = 2;
 }
 
 message Record {
+  // dog_food name is a name of dogfood brand.
 	string dogfood_name = 1;
+  // grap specifies how grams a dog eat dogfood.
 	int32 gram = 2;
+  // dog_name specifies a name of dog.
   string dog_name = 3;
+  // eaten_at specifies what time a dog ate a dogfood.
   google.protobuf.Timestamp eaten_at = 4;
 }
