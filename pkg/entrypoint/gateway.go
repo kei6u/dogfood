@@ -78,8 +78,7 @@ func RunGateway() {
 	http.HandleFunc(readinessProbeRequestURI, func(w http.ResponseWriter, _ *http.Request) {
 		if err := r.Ping(ctx).Err(); err != nil {
 			logger.Error("readiness probe failed", zap.Error(err))
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(fmt.Sprintf("readiness probe failed: %s", err)))
+			http.Error(w, fmt.Sprintf("readiness probe failed: %s", err), 503)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -87,14 +86,12 @@ func RunGateway() {
 	http.HandleFunc(startupProbeRequestURI, func(w http.ResponseWriter, _ *http.Request) {
 		if err := r.Set(ctx, startupProbeRequestURI, true, time.Second).Err(); err != nil {
 			logger.Error("startup probe failed", zap.Error(err))
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(fmt.Sprintf("startup probe failed: %s", err)))
+			http.Error(w, fmt.Sprintf("startup probe failed: %s", err), 503)
 			return
 		}
 		if _, err := r.Get(ctx, startupProbeRequestURI).Result(); err != nil {
 			logger.Error("startup probe failed", zap.Error(err))
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(fmt.Sprintf("startup probe failed: %s", err)))
+			http.Error(w, fmt.Sprintf("startup probe failed: %s", err), 503)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -174,32 +171,28 @@ func (gw *gateway) handleFunc(pattern string) (string, http.HandlerFunc) {
 		r = r.WithContext(ctx)
 		if err := tracer.Inject(span.Context(), tracer.HTTPHeadersCarrier(r.Header)); err != nil {
 			gw.l.Error("failed to inject span", append(fields, zap.Error(err))...)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(fmt.Sprintf("failed to inject span: %v", err)))
+			http.Error(w, fmt.Sprintf("failed to inject span: %v", err), 500)
 			return
 		}
 
 		addr, ok := gw.addrLookup[pattern]
 		if !ok {
 			gw.l.Error("requested pattern is not found", append(fields, zap.String("pattern", pattern))...)
-			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(fmt.Sprintf("%s is not found", pattern)))
+			http.Error(w, fmt.Sprintf("%s is not supported", pattern), 400)
 			return
 		}
 
 		ip := httplib.GetIP(r)
 		if ip == nil {
 			gw.l.Error(fmt.Sprintf("ip address: %s is invalid format", ip.String()), fields...)
-			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("ip address is missing"))
+			http.Error(w, "ip address is missing", 400)
 			return
 		}
 
-		s, err := gw.ratelimit(w, r, pattern, ip)
+		statuscode, err := gw.ratelimit(w, r, pattern, ip)
 		if err != nil {
 			gw.l.Error("request failed", append(fields, zap.Error(err))...)
-			w.WriteHeader(s)
-			w.Write([]byte(err.Error()))
+			http.Error(w, fmt.Sprintf("request failed: %s", err), statuscode)
 			return
 		}
 
