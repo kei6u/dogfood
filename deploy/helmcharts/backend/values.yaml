@@ -51,8 +51,6 @@ ports:
   grpc: 50100
   grpcGateway: 50101
 
-gitCommitSha: ""
-
 env: []
   # - name: DD_ENV
   #   value: production

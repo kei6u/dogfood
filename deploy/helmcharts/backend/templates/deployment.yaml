@@ -16,7 +16,6 @@ spec:
     metadata:
       annotations:
         ad.datadoghq.com/{{ .Chart.Name }}.logs: '[{"source":"go","service":{{ .Chart.Name | quote }}}]'
-        ad.datadoghq.com/tags: '{"git.commit.sha": {{ .Values.gitCommitSha | quote }}}'
         ad.datadoghq.com/{{ .Chart.Name }}.check_names: |
           ["openmetrics"]
         ad.datadoghq.com/{{ .Chart.Name }}.init_configs: |

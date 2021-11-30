@@ -50,8 +50,6 @@ resources:
 addr: 50001
 dogfoodBackendAddr: http://dogfood-backend:50101
 
-gitCommitSha: ""
-
 ratelimitConfig:
   timeUnit: hour
   limit: 60

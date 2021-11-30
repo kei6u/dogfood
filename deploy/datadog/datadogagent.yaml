@@ -26,6 +26,8 @@ spec:
           value: Datadog
         - name: DD_PROPAGATION_STYLE_EXTRACT
           value: Datadog
+        - name: DD_DOCKER_LABELS_AS_TAGS
+          value: '{"org.opencontainers.image.revision": "git.commit.sha"}'
     process:
       enabled: true
       processCollectionEnabled: true
