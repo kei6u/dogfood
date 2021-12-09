@@ -37,6 +37,18 @@ func RunBackend() {
 		cancel()
 	}()
 
+	go func() {
+		for {
+			if ctx.Err() != nil {
+				return
+			}
+			span := tracer.StartSpan("web_type_span_generator", tracer.SpanType("web"))
+			time.Sleep(time.Duration(rand.Intn(3) * int(time.Second)))
+			logger.Info(fmt.Sprintf("span generated at %v", time.Now()), zap.Uint64("dd.span_id", span.Context().SpanID()), zap.Uint64("dd.trace_id", span.Context().TraceID()))
+			span.Finish()
+		}
+	}()
+
 	s, err := protov1.NewServer(
 		ctx,
 		os.Getenv("GRPC_ADDR"),
@@ -51,18 +63,6 @@ func RunBackend() {
 		logger.Warn("exit due to a failure of starting dogfood backend server", zap.Error(err))
 		return
 	}
-
-	go func() {
-		for {
-			if ctx.Err() != nil {
-				return
-			}
-			span := tracer.StartSpan("web_type_span_generater", tracer.SpanType("web"))
-			time.Sleep(time.Duration(rand.Intn(3) * int(time.Second)))
-			logger.Info(fmt.Sprintf("span generated at %v", time.Now()), zap.Uint64("dd.span_id", span.Context().SpanID()), zap.Uint64("dd.trace_id", span.Context().TraceID()))
-			span.Finish()
-		}
-	}()
 
 	<-ctx.Done()
 	s.Stop()
