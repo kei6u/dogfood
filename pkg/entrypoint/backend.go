@@ -2,13 +2,17 @@ package entrypoint
 
 import (
 	"context"
+	"fmt"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/kei6u/dogfood/driver"
 	protov1 "github.com/kei6u/dogfood/proto/v1"
 	"go.uber.org/zap"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
 func RunBackend() {
@@ -47,6 +51,18 @@ func RunBackend() {
 		logger.Warn("exit due to a failure of starting dogfood backend server", zap.Error(err))
 		return
 	}
+
+	go func() {
+		for {
+			if ctx.Err() != nil {
+				return
+			}
+			span := tracer.StartSpan("web_type_span_generater", tracer.SpanType("web"))
+			time.Sleep(time.Duration(rand.Intn(3) * int(time.Second)))
+			logger.Info(fmt.Sprintf("span generated at %v", time.Now()), zap.Uint64("dd.span_id", span.Context().SpanID()), zap.Uint64("dd.trace_id", span.Context().TraceID()))
+			span.Finish()
+		}
+	}()
 
 	<-ctx.Done()
 	s.Stop()

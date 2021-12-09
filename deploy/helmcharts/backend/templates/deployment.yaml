@@ -95,6 +95,8 @@ spec:
             value: {{ .Values.ports.grpcGateway | quote }}
           - name: DD_SERVICE
             value: dogfood.backend
+          - name: SPAN_TYPE
+            value: web
           - name: DD_VERSION
             value: {{ .Values.image.tag | default .Chart.AppVersion }}
           - name: DD_AGENT_HOST

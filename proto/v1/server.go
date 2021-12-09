@@ -4,12 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math/rand"
 	"net"
 	"net/http"
-	"os"
 	"strings"
-	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -84,18 +81,6 @@ func (s *Server) Start(ctx context.Context) error {
 	go s.promHttpServer.ListenAndServe()
 	go s.grpcServer.Serve(lis)
 	go s.grpcgwServer.ListenAndServe()
-	go func() {
-		for {
-			if ctx.Err() != nil {
-				return
-			}
-			span := tracer.StartSpan("span_generater", tracer.SpanType(os.Getenv("SPAN_TYPE")))
-			time.Sleep(time.Duration(rand.Intn(10) * int(time.Second)))
-			s.logger.Info(fmt.Sprintf("span generated at %v", time.Now()), zap.Uint64("dd.span_id", span.Context().SpanID()), zap.Uint64("dd.trace_id", span.Context().TraceID()))
-			span.Finish()
-		}
-	}()
-
 	<-ctx.Done()
 	return nil
 }

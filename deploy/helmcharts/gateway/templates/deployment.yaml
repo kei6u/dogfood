@@ -60,6 +60,8 @@ spec:
             value: {{ .Values.addr | quote }}
           - name: DOGFOOD_BACKEND_ADDR
             value: {{ .Values.dogfoodBackendAddr }}
+          - name: SPAN_TYPE
+            value: web
           - name: REDIS_HOST
             value: {{ .Values.redisConfig.host }}
           - name: REDIS_ADDR
