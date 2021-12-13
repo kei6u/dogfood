@@ -39,7 +39,11 @@ func RunBackend() {
 
 	go generateSpan(ctx, logger, "web")
 	go generateSpan(ctx, logger, "http")
+	go generateSpan(ctx, logger, "proxy")
+	go generateSpan(ctx, logger, "worker")
+	go generateSpan(ctx, logger, "test")
 	go generateSpan(ctx, logger, "db")
+	go generateSpan(ctx, logger, "sql")
 	go generateSpan(ctx, logger, "cache")
 	go generateSpan(ctx, logger, "function")
 
@@ -69,7 +73,7 @@ func generateSpan(ctx context.Context, logger *zap.Logger, spanType string) {
 			return
 		}
 		span := tracer.StartSpan(spanName, tracer.SpanType(spanType))
-		time.Sleep(time.Duration(rand.Intn(3) * int(time.Second)))
+		time.Sleep(time.Duration(rand.Intn(10) * int(time.Second)))
 		logger.Info(fmt.Sprintf("%s span generated at %v", spanType, time.Now()), zap.Uint64("dd.span_id", span.Context().SpanID()), zap.Uint64("dd.trace_id", span.Context().TraceID()))
 		span.Finish()
 	}
