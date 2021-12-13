@@ -37,17 +37,11 @@ func RunBackend() {
 		cancel()
 	}()
 
-	go func() {
-		for {
-			if ctx.Err() != nil {
-				return
-			}
-			span := tracer.StartSpan("web_type_span_generator", tracer.SpanType("web"))
-			time.Sleep(time.Duration(rand.Intn(3) * int(time.Second)))
-			logger.Info(fmt.Sprintf("span generated at %v", time.Now()), zap.Uint64("dd.span_id", span.Context().SpanID()), zap.Uint64("dd.trace_id", span.Context().TraceID()))
-			span.Finish()
-		}
-	}()
+	go generateSpan(ctx, logger, "web")
+	go generateSpan(ctx, logger, "http")
+	go generateSpan(ctx, logger, "db")
+	go generateSpan(ctx, logger, "cache")
+	go generateSpan(ctx, logger, "function")
 
 	s, err := protov1.NewServer(
 		ctx,
@@ -66,4 +60,17 @@ func RunBackend() {
 
 	<-ctx.Done()
 	s.Stop()
+}
+
+func generateSpan(ctx context.Context, logger *zap.Logger, spanType string) {
+	spanName := fmt.Sprintf("%s_type_span_generator", spanType)
+	for {
+		if ctx.Err() != nil {
+			return
+		}
+		span := tracer.StartSpan(spanName, tracer.SpanType(spanType))
+		time.Sleep(time.Duration(rand.Intn(3) * int(time.Second)))
+		logger.Info(fmt.Sprintf("%s span generated at %v", spanType, time.Now()), zap.Uint64("dd.span_id", span.Context().SpanID()), zap.Uint64("dd.trace_id", span.Context().TraceID()))
+		span.Finish()
+	}
 }
